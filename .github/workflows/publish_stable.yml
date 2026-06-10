@@ -1,0 +1,12 @@
+name: Publish Stable
+
+on:
+  workflow_call:
+
+jobs:
+  publish_stable:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/publish_stable.yml@dev
+    with:
+      python-version: "3.11"
+      version-file: "ovos_ww_plugin_microwakeword/version.py"
+    secrets: inherit

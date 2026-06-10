@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ovos-ww-plugin-microwakeword"
+dynamic = ["version"]
+description = "OVOS wake-word plugin wrapping microWakeWord TFLite streaming models (ESPHome ecosystem)"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "JarbasAi", email = "jarbasai@mailfence.com"}]
+requires-python = ">=3.9"
+
+keywords = [
+    "mycroft",
+    "ovos",
+    "plugin",
+    "wake",
+    "word",
+    "microwakeword",
+    "esphome",
+    "tflite",
+]
+
+dependencies = [
+    "ovos-plugin-manager>=1.0.0,<2.0.0",
+    "ovos-utils>=0.0.14,<1.0.0",
+    "requests",
+    "numpy",
+    "pymicro-features",
+    "ai-edge-litert>=2.0.0; platform_machine == 'x86_64' and platform_system == 'Linux'",
+    "tflite-runtime; platform_machine != 'x86_64' or platform_system != 'Linux'",
+]
+
+[project.urls]
+Homepage = "https://github.com/TigreGotico/ovos-ww-plugin-microwakeword"
+Repository = "https://github.com/TigreGotico/ovos-ww-plugin-microwakeword"
+
+[project.entry-points."opm.wake_word"]
+ovos-ww-plugin-microwakeword = "ovos_ww_plugin_microwakeword:MicroWakeWordPlugin"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["ovos_ww_plugin_microwakeword*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ovos_ww_plugin_microwakeword.version.__version__"}

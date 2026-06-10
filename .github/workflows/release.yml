@@ -1,0 +1,14 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+
+jobs:
+  release:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/release.yml@dev
+    with:
+      version-file: "ovos_ww_plugin_microwakeword/version.py"
+    secrets: inherit
