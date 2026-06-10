@@ -47,3 +47,11 @@ include = ["ovos_ww_plugin_microwakeword*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "ovos_ww_plugin_microwakeword.version.__version__"}
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+no_site_packages = true
+strict = false
+warn_unused_ignores = true
+warn_return_any = false

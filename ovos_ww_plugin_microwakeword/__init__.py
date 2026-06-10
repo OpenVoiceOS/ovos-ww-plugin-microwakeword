@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import os
 from os.path import isfile, expanduser, join
+from typing import Optional
 
 import requests
 from ovos_plugin_manager.templates.hotwords import HotWordEngine
@@ -60,7 +61,7 @@ def _model_url(name: str, version: int = 1) -> str:
 class MicroWakeWordPlugin(HotWordEngine):
     """OVOS HotWordEngine wrapping microWakeWord TFLite streaming models."""
 
-    def __init__(self, key_phrase: str = "okay nabu", config: dict = None) -> None:
+    def __init__(self, key_phrase: str = "okay nabu", config: Optional[dict] = None) -> None:
         super().__init__(key_phrase, config)
 
         self._trigger_flag = False
