@@ -132,3 +132,11 @@ The negative test ("hello world") is a hard assertion.
 ## License
 
 Apache-2.0
+
+## Credits
+
+Developed by [TigreGotico](https://tigregotico.pt) for [OpenVoiceOS](https://openvoiceos.org).
+
+Funded by [NGI0 Commons Fund](https://nlnet.nl/project/OpenVoiceOS) / [NLnet](https://nlnet.nl)
+under grant agreement No [101135429](https://cordis.europa.eu/project/id/101135429),
+through the European Commission's [Next Generation Internet](https://ngi.eu) programme.
