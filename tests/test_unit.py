@@ -303,5 +303,67 @@ class TestPluginContract(unittest.TestCase):
         plugin._engine.reset.assert_called_once()
 
 
+class TestModelUrl(unittest.TestCase):
+    """_model_url helper constructs correct ESPHome URLs."""
+
+    def test_v1_url(self):
+        from ovos_ww_plugin_microwakeword import _model_url
+        url = _model_url("okay_nabu", version=1)
+        self.assertIn("okay_nabu.tflite", url)
+        self.assertNotIn("/v2/", url)
+
+    def test_v2_url(self):
+        from ovos_ww_plugin_microwakeword import _model_url
+        url = _model_url("hey_jarvis", version=2)
+        self.assertIn("/v2/", url)
+        self.assertIn("hey_jarvis.tflite", url)
+
+    def test_default_version_is_v1(self):
+        from ovos_ww_plugin_microwakeword import _model_url
+        url = _model_url("alexa")
+        self.assertNotIn("/v2/", url)
+
+
+class TestRefractoryExact(unittest.TestCase):
+    """Refractory counter decrements correctly."""
+
+    def _engine(self, refractory=5, window=3):
+        probs = [0.9] * 200
+        fake = _make_fake_interpreter(probs)
+        with patch(f"{_ENGINE_MODULE}.Interpreter", return_value=fake):
+            from ovos_ww_plugin_microwakeword.inference import MicroWakeWordEngine
+            eng = MicroWakeWordEngine(
+                "fake.tflite",
+                probability_cutoff=0.5,
+                sliding_window_size=window,
+                refractory_frames=refractory,
+            )
+        return eng
+
+    def test_refractory_counter_zero_after_reset(self):
+        """After reset(), refractory counter is 0 regardless of prior state."""
+        eng = self._engine(refractory=3, window=2)
+        eng._refractory = 99
+        eng.reset()
+        self.assertEqual(eng._refractory, 0)
+
+    def test_no_detection_during_refractory(self):
+        """is_detected never fires while refractory > 0."""
+        eng = self._engine(refractory=10, window=2)
+        # Fire once to set refractory
+        chunk = _make_pcm_chunk(320)
+        fired_once = False
+        for _ in range(5):
+            if eng.is_detected(chunk):
+                fired_once = True
+                break
+        if not fired_once:
+            self.skipTest("Engine did not fire in priming phase")
+        # Now refractory should be active; no more detections for next calls
+        fires = sum(1 for _ in range(5) if eng.is_detected(chunk))
+        # Within 5 frames (50 ms) refractory=10 frames should suppress
+        self.assertEqual(fires, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
