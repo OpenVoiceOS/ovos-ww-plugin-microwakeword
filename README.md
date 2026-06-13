@@ -129,14 +129,23 @@ The positive test soft-fails (SKIP) rather than hard-fails when TTS audio
 does not trigger the model, because the model is trained on human voice.
 The negative test ("hello world") is a hard assertion.
 
-## License
-
-Apache-2.0
+---
 
 ## Credits
 
-Developed by [TigreGotico](https://tigregotico.pt) for [OpenVoiceOS](https://openvoiceos.org).
+Developed by [TigreGótico](https://tigregotico.pt) for
+[OpenVoiceOS](https://openvoiceos.org).
 
-Funded by [NGI0 Commons Fund](https://nlnet.nl/project/OpenVoiceOS) / [NLnet](https://nlnet.nl)
-under grant agreement No [101135429](https://cordis.europa.eu/project/id/101135429),
-through the European Commission's [Next Generation Internet](https://ngi.eu) programme.
+[![NGI0 Commons Fund](./ngi.png)](https://nlnet.nl/project/OpenVoiceOS)
+
+This project was funded through the [NGI0 Commons Fund](https://nlnet.nl/commonsfund),
+a fund established by [NLnet](https://nlnet.nl) with financial support from the
+European Commission's [Next Generation Internet](https://ngi.eu) programme, under
+the aegis of [DG Communications Networks, Content and Technology](https://commission.europa.eu/about-european-commission/departments-and-executive-agencies/communications-networks-content-and-technology_en)
+under grant agreement No [101135429](https://cordis.europa.eu/project/id/101135429).
+
+---
+
+## License
+
+Apache-2.0
