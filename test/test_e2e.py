@@ -69,11 +69,14 @@ def _have_edge_tts() -> bool:
 
 
 def _have_ffmpeg() -> bool:
-    return subprocess.call(
-        ["ffmpeg", "-version"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    ) == 0
+    try:
+        return subprocess.call(
+            ["ffmpeg", "-version"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        ) == 0
+    except (FileNotFoundError, OSError):
+        return False
 
 
 def _tts_to_pcm(text: str) -> bytes:
