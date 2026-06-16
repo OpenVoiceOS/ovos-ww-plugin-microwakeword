@@ -23,7 +23,7 @@ keywords = [
 ]
 
 dependencies = [
-    "ovos-plugin-manager>=1.0.0,<2.0.0",
+    "ovos-plugin-manager>=2.1.0,<3.0.0",
     "ovos-utils>=0.0.14,<1.0.0",
     "requests",
     "numpy",
@@ -31,6 +31,9 @@ dependencies = [
     "ai-edge-litert>=2.0.0; platform_machine == 'x86_64' and platform_system == 'Linux'",
     "tflite-runtime; platform_machine != 'x86_64' or platform_system != 'Linux'",
 ]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov", "edge-tts"]
 
 [project.urls]
 Homepage = "https://github.com/TigreGotico/ovos-ww-plugin-microwakeword"

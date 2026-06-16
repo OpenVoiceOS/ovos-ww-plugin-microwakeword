@@ -1,35 +1,16 @@
-name: Build and Test
+name: Build Tests
 
 on:
-  push:
-    branches:
-      - dev
-      - "feat/**"
   pull_request:
-    branches:
-      - dev
+    branches: [dev, master, main]
+  workflow_dispatch:
 
 jobs:
-  unit-tests:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.11"]
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install ai-edge-litert pymicro-features numpy requests
-          pip install ovos-plugin-manager ovos-utils
-          pip install pytest
-          pip install -e . --no-deps
-
-      - name: Run unit tests
-        run: pytest tests/test_unit.py -v
+  build:
+    uses: OpenVoiceOS/gh-automations/.github/workflows/build-tests.yml@dev
+    secrets: inherit
+    with:
+      python_versions: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+      install_extras: 'test'
+      test_path: 'test'
+      system_deps: 'ffmpeg'
