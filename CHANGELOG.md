@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.1a3](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.1a3) (2026-08-01)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/0.0.1a2...0.0.1a3)
+
+**Merged pull requests:**
+
+- docs: rewrite README in Simplified Technical English [\#11](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/pull/11) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.0.1a2](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.1a2) (2026-06-16)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/e123f6cee3deb8b688b7f91a04eb46a2b0353a1a...0.0.1a2)
