@@ -1,22 +1,23 @@
 # ovos-ww-plugin-microwakeword
 
-OVOS wake-word plugin wrapping [microWakeWord](https://github.com/kahrendt/microWakeWord)
-TFLite streaming models from the [ESPHome ecosystem](https://github.com/esphome/micro-wake-word-models).
+This plugin adds wake-word detection to OpenVoiceOS. It wraps
+[microWakeWord](https://github.com/kahrendt/microWakeWord) TFLite streaming
+models from the [ESPHome ecosystem](https://github.com/esphome/micro-wake-word-models).
 
 ## Supported models
 
 Models published at <https://github.com/esphome/micro-wake-word-models>:
 
-| `model_name`  | Phrase         | v1 | v2 |
-|---------------|----------------|----|----|
-| `okay_nabu`   | Okay Nabu      | ✓  | ✓  |
-| `hey_jarvis`  | Hey Jarvis     | ✓  | ✓  |
-| `alexa`       | Alexa          | ✓  | ✓  |
-| `hey_mycroft` | Hey Mycroft    | –  | ✓  |
-| `vad`         | Voice activity | –  | ✓  |
+| `model_name`  | Phrase         | v1  | v2  |
+|---------------|----------------|-----|-----|
+| `okay_nabu`   | Okay Nabu      | yes | yes |
+| `hey_jarvis`  | Hey Jarvis     | yes | yes |
+| `alexa`       | Alexa          | yes | yes |
+| `hey_mycroft` | Hey Mycroft    | no  | yes |
+| `vad`         | Voice activity | no  | yes |
 
-Any community-provided `.tflite` model that follows the microWakeWord input
-convention (1×1×40 int8 log-mel features) is compatible.
+The plugin also accepts any community `.tflite` model that follows the
+microWakeWord input convention (1x1x40 int8 log-mel features).
 
 ## Installation
 
@@ -24,14 +25,14 @@ convention (1×1×40 int8 log-mel features) is compatible.
 pip install ovos-ww-plugin-microwakeword
 ```
 
-The package declares `ai-edge-litert` (Linux x86\_64) or `tflite-runtime`
-(other platforms) as a runtime dependency alongside `pymicro-features`
+The package installs `ai-edge-litert` (on Linux x86_64) or `tflite-runtime`
+(on other platforms) as a runtime dependency, along with `pymicro-features`
 (the TFLite Micro audio frontend wrapper).
 
-## Configuration
+## Usage
 
-In `~/.config/mycroft/mycroft.conf` (or `ovos.conf`), under the `hotwords`
-section for your chosen keyword:
+Add the plugin to the `hotwords` section of `~/.config/mycroft/mycroft.conf`
+(or `ovos.conf`), under your chosen wake word:
 
 ```json
 {
@@ -52,12 +53,12 @@ section for your chosen keyword:
 
 | Key                  | Type    | Default      | Description |
 |----------------------|---------|--------------|-------------|
-| `model`              | `str`   | *(auto)*     | Absolute path to a `.tflite` file, or an `https://` URL. Takes precedence over `model_name`. |
-| `model_name`         | `str`   | `okay_nabu`  | Short name of an official ESPHome model. Auto-downloads on first use. |
-| `model_version`      | `int`   | `1`          | `1` or `2` — selects the model subdirectory in the ESPHome repository. |
-| `probability_cutoff` | `float` | `0.5`        | Dequantized probability threshold in [0, 1]. Higher → fewer false positives, lower → fewer missed detections. |
-| `sliding_window_size`| `int`   | `10`         | Number of consecutive 10 ms frames whose average must exceed `probability_cutoff` before a detection fires. Mirrors ESPHome `sliding_window_average_size`. |
-| `refractory_frames`  | `int`   | `40`         | Frames to ignore after a detection (≈ 400 ms) to prevent double-fires. |
+| `model`              | `str`   | *(auto)*     | Absolute path to a `.tflite` file, or an `https://` URL. This setting takes precedence over `model_name`. |
+| `model_name`         | `str`   | `okay_nabu`  | Short name of an official ESPHome model. The plugin downloads it on first use. |
+| `model_version`      | `int`   | `1`          | `1` or `2`. Selects the model subdirectory in the ESPHome repository. |
+| `probability_cutoff` | `float` | `0.5`        | Dequantized probability threshold, in the range [0, 1]. A higher value gives fewer false positives. A lower value gives fewer missed detections. |
+| `sliding_window_size`| `int`   | `10`         | Number of consecutive 10 ms frames whose average must exceed `probability_cutoff` before a detection fires. This mirrors the ESPHome `sliding_window_average_size` setting. |
+| `refractory_frames`  | `int`   | `40`         | Frames to ignore after a detection (about 400 ms). This prevents double-fires. |
 
 ## Technical details
 
@@ -84,21 +85,21 @@ Output tensor: StatefulPartitionedCall:0      shape=[1, 1]       dtype=uint8
 ```
 
 The model embeds its streaming RNN/convolution state as TFLite resource
-variables.  Each sequential `interpreter.invoke()` call advances the internal
-state automatically — no external state tensor management is needed.
-`interpreter.allocate_tensors()` resets the streaming state (called by
-`reset()`).
+variables. Each sequential `interpreter.invoke()` call advances the internal
+state automatically, so the plugin does not manage an external state tensor.
+`interpreter.allocate_tensors()` resets the streaming state. The plugin
+calls it from `reset()`.
 
 ### ESPHome model compatibility notes
 
-- **v1 models** use the original microWakeWord architecture; quantized int8
-  input with the TFLite Micro audio frontend.
-- **v2 models** use the same input convention — the plugin supports both
+- v1 models use the original microWakeWord architecture, with quantized int8
+  input for the TFLite Micro audio frontend.
+- v2 models use the same input convention. The plugin supports both
   transparently.
-- Models must accept `[1, 1, 40] int8` input; any model with a different
-  input shape will raise `ValueError` at load time.
-- The audio frontend (`pymicro-features`) is the exact same C implementation
-  used by ESPHome's on-device inference.
+- A model must accept `[1, 1, 40] int8` input. Any model with a different
+  input shape raises `ValueError` at load time.
+- The audio frontend (`pymicro-features`) is the same C implementation that
+  ESPHome uses for on-device inference.
 
 ## How to test
 
@@ -110,7 +111,7 @@ pytest tests/test_unit.py -v
 
 All 16 unit tests use a mocked interpreter and pass without network access.
 
-### End-to-end tests (downloads okay_nabu.tflite, requires edge-tts + ffmpeg)
+### End-to-end tests (downloads okay_nabu.tflite, requires edge-tts and ffmpeg)
 
 ```bash
 pip install edge-tts
@@ -125,9 +126,19 @@ tests/test_e2e.py::TestE2EReal::test_negative_no_detection PASSED
 tests/test_e2e.py::TestE2EReal::test_positive_detection PASSED
 ```
 
-The positive test soft-fails (SKIP) rather than hard-fails when TTS audio
-does not trigger the model, because the model is trained on human voice.
-The negative test ("hello world") is a hard assertion.
+The positive test skips rather than fails when TTS audio does not trigger
+the model, because the model is trained on human voice. The negative test
+("hello world") is a hard assertion.
+
+## Related projects
+
+Other OpenVoiceOS wake-word plugins:
+
+- [ovos-ww-plugin-openWakeWord](https://github.com/OpenVoiceOS/ovos-ww-plugin-openWakeWord)
+- [ovos-ww-plugin-precise-onnx](https://github.com/OpenVoiceOS/ovos-ww-plugin-precise-onnx)
+- [ovos-ww-plugin-vosk](https://github.com/OpenVoiceOS/ovos-ww-plugin-vosk)
+- [ovos-ww-plugin-wakeforge](https://github.com/OpenVoiceOS/ovos-ww-plugin-wakeforge)
+- [ovos-ww-plugin-wakewordlab](https://github.com/OpenVoiceOS/ovos-ww-plugin-wakewordlab)
 
 ---
 
