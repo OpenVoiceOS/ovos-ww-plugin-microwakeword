@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.1a4](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.1a4) (2026-10-22)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/0.0.1a3...0.0.1a4)
+
+**Merged pull requests:**
+
+- chore: add Apache-2.0 license [\#12](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/pull/12) ([JarbasAl](https://github.com/JarbasAl))
+
 ## [0.0.1a3](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.1a3) (2026-08-01)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/0.0.1a2...0.0.1a3)
