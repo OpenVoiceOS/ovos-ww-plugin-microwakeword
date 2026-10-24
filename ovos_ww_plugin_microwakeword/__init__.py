@@ -2,7 +2,7 @@
 ovos-ww-plugin-microwakeword — OVOS hotword plugin wrapping microWakeWord
 TFLite streaming models from the ESPHome ecosystem.
 
-Supported models: okay_nabu, hey_jarvis, alexa, hey_mycroft (v1 and v2),
+Supported models: okay_nabu, hey_jarvis, alexa (v1 and v2), hey_mycroft (v2),
 and any compatible community model published at
 https://github.com/esphome/micro-wake-word-models.
 
@@ -27,15 +27,16 @@ Configuration keys (under the hotwords section in mycroft.conf):
         Dequantized probability threshold in [0, 1].  Default ``0.5``.
 
     sliding_window_size (int):
-        Number of consecutive 10 ms frames whose average must exceed
+        Number of consecutive inferences whose average must reach
         ``probability_cutoff`` to trigger a detection.  Default ``10``.
 
     refractory_frames (int):
-        Frames to suppress after a detection (anti-double-fire).
-        Default ``40`` (≈ 400 ms).
+        Inferences to suppress after a detection (anti-double-fire).
+        Default ``40`` (800 ms for a v1 model, 1.2 s for a v2 model).
 """
 from __future__ import annotations
 
+import hashlib
 import os
 from os.path import isfile, expanduser, join
 from typing import Optional
@@ -103,8 +104,9 @@ class MicroWakeWordPlugin(HotWordEngine):
     @staticmethod
     def _download(url: str) -> str:
         folder = join(xdg_data_home(), "microwakeword")
-        fname = url.split("/")[-1]
-        dest = join(folder, fname)
+        # v1 and v2 models share a file name, so the URL keys the cache
+        digest = hashlib.sha256(url.encode()).hexdigest()[:12]
+        dest = join(folder, f"{digest}-{url.split('/')[-1]}")
         if not isfile(dest):
             LOG.info(f"Downloading microWakeWord model: {url}")
             os.makedirs(folder, exist_ok=True)
