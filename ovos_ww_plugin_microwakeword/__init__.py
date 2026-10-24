@@ -139,6 +139,6 @@ class MicroWakeWordPlugin(HotWordEngine):
         """
         if self._trigger_flag:
             self._trigger_flag = False
-            self._engine.reset()
+            self._engine.reset(refractory=self._engine.refractory_frames)
             return True
         return False

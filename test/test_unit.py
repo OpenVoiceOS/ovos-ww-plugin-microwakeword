@@ -300,7 +300,39 @@ class TestPluginContract(unittest.TestCase):
         plugin = self._plugin(detect=True)
         plugin.update(_make_pcm_chunk())
         plugin.found_wake_word()
-        plugin._engine.reset.assert_called_once()
+        plugin._engine.reset.assert_called_once_with(
+            refractory=plugin._engine.refractory_frames
+        )
+
+
+class TestOneFirePerRefractoryPeriod(unittest.TestCase):
+    """update() + found_wake_word() fire once per refractory period, like ESPHome."""
+
+    def test_a_long_high_probability_run_fires_once_per_refractory(self):
+        from ovos_ww_plugin_microwakeword import MicroWakeWordPlugin
+
+        fake = _make_fake_interpreter([0.9] * 1000)
+        with patch(f"{_ENGINE_MODULE}.Interpreter", return_value=fake):
+            from ovos_ww_plugin_microwakeword.inference import MicroWakeWordEngine
+            engine = MicroWakeWordEngine(
+                "fake.tflite", probability_cutoff=0.5,
+                sliding_window_size=3, refractory_frames=40,
+            )
+        plugin = MicroWakeWordPlugin.__new__(MicroWakeWordPlugin)
+        plugin.config = {}
+        plugin.key_phrase = "okay nabu"
+        plugin._trigger_flag = False
+        plugin._engine = engine
+        frames = engine.input_chunk_samples
+        fires = []
+        for i in range(200):
+            plugin.update(_make_pcm_chunk(frames))
+            if plugin.found_wake_word():
+                fires.append(i)
+        # one probability per update once the frontend has 2 updates of audio
+        # (at the start and after each reset); the window fills in 3, so the
+        # first fire is update 4, then 40 refractory frames: a fire every 2 + 40 + 3
+        self.assertEqual(fires, [4, 49, 94, 139, 184])
 
 
 class TestModelUrl(unittest.TestCase):
