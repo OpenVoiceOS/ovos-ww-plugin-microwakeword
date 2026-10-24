@@ -194,11 +194,15 @@ class MicroWakeWordEngine:
                     return True
         return False
 
-    def reset(self) -> None:
-        """Reset all state: frontend, sliding window, refractory counter, buffers."""
+    def reset(self, refractory: int = 0) -> None:
+        """Reset all state: frontend, sliding window, buffers.
+
+        The refractory counter is set to *refractory* frames, so a reset right
+        after a detection still keeps the next frames from firing again.
+        """
         self._frontend.reset()
         self._window.clear()
-        self._refractory = 0
+        self._refractory = refractory
         self._pcm_buffer = b""
         self._features = []
         # Re-allocate tensors to reset model's internal streaming state
