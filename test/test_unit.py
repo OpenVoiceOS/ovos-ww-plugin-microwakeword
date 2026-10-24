@@ -365,5 +365,81 @@ class TestRefractoryExact(unittest.TestCase):
         self.assertEqual(fires, 0)
 
 
+
+class TestFeatureStep(unittest.TestCase):
+    """A v1 model steps 20 ms per feature slice; a v2 model takes three 10 ms slices."""
+
+    @staticmethod
+    def _engine(stride=1, **kw):
+        fake = _make_fake_interpreter([0.1] * 500)
+        fake.get_input_details.return_value[0]["shape"] = np.array([1, stride, 40])
+        with patch(f"{_ENGINE_MODULE}.Interpreter", return_value=fake):
+            from ovos_ww_plugin_microwakeword.inference import MicroWakeWordEngine
+            return MicroWakeWordEngine("fake.tflite", **kw), fake
+
+    @staticmethod
+    def _speech(seconds=1.0):
+        rng = np.random.default_rng(0)
+        return (rng.standard_normal(int(16000 * seconds)) * 3000).astype("<i2").tobytes()
+
+    @staticmethod
+    def _slices(pcm, step_samples):
+        from pymicro_features import MicroFrontend
+
+        frontend = MicroFrontend()
+        size = step_samples * 2
+        return sum(1 for i in range(0, len(pcm) - size + 1, size)
+                   if frontend.process_samples(pcm[i:i + size]).features)
+
+    def test_v1_model_keeps_the_20ms_step(self):
+        eng, _ = self._engine()
+        pcm = self._speech()
+        self.assertEqual(len(eng.process_audio(pcm)), self._slices(pcm, 320))
+        self.assertEqual(self._slices(pcm, 320), 48)
+
+    def test_v2_model_takes_three_10ms_slices_per_inference(self):
+        eng, fake = self._engine(stride=3)
+        pcm = self._speech()
+        self.assertEqual(self._slices(pcm, 160), 98)  # (16000 - 480) / 160 + 1
+        self.assertEqual(len(eng.process_audio(pcm)), 98 // 3)
+        shapes = {call.args[1].shape for call in fake.set_tensor.call_args_list}
+        self.assertEqual(shapes, {(1, 3, 40)})
+
+    def test_chunk_size_does_not_change_the_inferences(self):
+        eng, _ = self._engine(stride=3)
+        pcm = self._speech()
+        probs = []
+        for i in range(0, len(pcm), 2560):  # 80 ms chunks, as the listener sends
+            probs += eng.process_audio(pcm[i:i + 2560])
+        self.assertEqual(len(probs), 98 // 3)
+
+    def test_other_input_shapes_are_refused(self):
+        for shape in ([1, 3, 20], [2, 1, 40], [1, 40]):
+            fake = _make_fake_interpreter([0.1])
+            fake.get_input_details.return_value[0]["shape"] = np.array(shape)
+            with patch(f"{_ENGINE_MODULE}.Interpreter", return_value=fake):
+                from ovos_ww_plugin_microwakeword.inference import MicroWakeWordEngine
+                with self.assertRaises(ValueError):
+                    MicroWakeWordEngine("fake.tflite")
+
+
+class TestModelCache(unittest.TestCase):
+    def test_v1_and_v2_models_are_cached_apart(self):
+        import tempfile
+        from ovos_ww_plugin_microwakeword import MicroWakeWordPlugin, _model_url
+
+        with tempfile.TemporaryDirectory() as home, \
+                patch("ovos_ww_plugin_microwakeword.xdg_data_home", return_value=home), \
+                patch("ovos_ww_plugin_microwakeword.requests.get") as get:
+            get.side_effect = lambda url, timeout: MagicMock(content=url.encode())
+            v1 = MicroWakeWordPlugin._download(_model_url("alexa", 1))
+            v2 = MicroWakeWordPlugin._download(_model_url("alexa", 2))
+            self.assertNotEqual(v1, v2)
+            with open(v2, "rb") as fh:
+                self.assertEqual(fh.read(), _model_url("alexa", 2).encode())
+            self.assertEqual(MicroWakeWordPlugin._download(_model_url("alexa", 1)), v1)
+            self.assertEqual(get.call_count, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -17,7 +17,7 @@ Models published at <https://github.com/esphome/micro-wake-word-models>:
 | `vad`         | Voice activity | no  | yes |
 
 The plugin also accepts any community `.tflite` model that follows the
-microWakeWord input convention (1x1x40 int8 log-mel features).
+microWakeWord input convention (1×stride×40 int8 log-mel features).
 
 ## Installation
 
@@ -57,8 +57,8 @@ Add the plugin to the `hotwords` section of `~/.config/mycroft/mycroft.conf`
 | `model_name`         | `str`   | `okay_nabu`  | Short name of an official ESPHome model. The plugin downloads it on first use. |
 | `model_version`      | `int`   | `1`          | `1` or `2`. Selects the model subdirectory in the ESPHome repository. |
 | `probability_cutoff` | `float` | `0.5`        | Dequantized probability threshold, in the range [0, 1]. A higher value gives fewer false positives. A lower value gives fewer missed detections. |
-| `sliding_window_size`| `int`   | `10`         | Number of consecutive 10 ms frames whose average must exceed `probability_cutoff` before a detection fires. This mirrors the ESPHome `sliding_window_average_size` setting. |
-| `refractory_frames`  | `int`   | `40`         | Frames to ignore after a detection (about 400 ms). This prevents double-fires. |
+| `sliding_window_size`| `int`   | `10`         | Number of consecutive inferences whose average must reach `probability_cutoff` before a detection fires. This mirrors the ESPHome `sliding_window_size` (v2) and `sliding_window_average_size` (v1) settings. |
+| `refractory_frames`  | `int`   | `40`         | Inferences to ignore after a detection. This prevents double-fires. |
 
 ## Technical details
 
@@ -66,9 +66,9 @@ Add the plugin to the `hotwords` section of `~/.config/mycroft/mycroft.conf`
 
 ```
 16 kHz int16 PCM  →  pymicro-features (TFLite Micro audio frontend)
-                  →  40-dim log-mel feature slice per 10 ms frame
+                  →  40-dim log-mel feature slice per feature step (20 ms v1, 10 ms v2)
                   →  quantize to int8 (scale 0.102, zero-point −128)
-                  →  TFLite interpreter (1×1×40 → 1×1 uint8)
+                  →  TFLite interpreter (1×stride×40 → 1×1 uint8; stride 1 v1, 3 v2)
                   →  dequantize → float probability
                   →  sliding window average ≥ cutoff → detection
 ```
@@ -94,10 +94,21 @@ calls it from `reset()`.
 
 - v1 models use the original microWakeWord architecture, with quantized int8
   input for the TFLite Micro audio frontend.
-- v2 models use the same input convention. The plugin supports both
-  transparently.
-- A model must accept `[1, 1, 40] int8` input. Any model with a different
-  input shape raises `ValueError` at load time.
+- v1 models take one feature slice per inference, with a 20 ms feature step.
+- v2 models take three feature slices per inference (`[1, 3, 40] int8`
+  input), with a 10 ms feature step. The plugin reads the number of slices
+  from the model's input shape.
+- The frontend always steps 10 ms. For a v1 model the plugin feeds it
+  20 ms chunks, and it does not read the second 10 ms of each chunk. This
+  approximates ESPHome's 20 ms step; it is not the same.
+- The plugin defaults (`probability_cutoff` 0.5, `sliding_window_size` 10)
+  make a v2 model wake on other speech. For a v2 model, copy
+  `probability_cutoff` and `sliding_window_size` from the model's ESPHome
+  manifest, for example 0.95 and 5 for `hey_mycroft`.
+- A model must accept `[1, stride, 40] int8` input. Any model with a
+  different input shape raises `ValueError` at load time.
+- A downloaded model is cached under a name that includes a hash of its URL,
+  so the v1 and v2 models of one phrase never share a cache file.
 - The audio frontend (`pymicro-features`) is the same C implementation that
   ESPHome uses for on-device inference.
 
