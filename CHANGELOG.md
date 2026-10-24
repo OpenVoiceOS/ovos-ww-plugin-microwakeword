@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3a1](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.3a1) (2026-10-24)
+
+[Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/0.0.2a1...0.0.3a1)
+
+**Merged pull requests:**
+
+- fix: keep the refractory period after a detection [\#14](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/pull/14) ([openvoiceos-bot](https://github.com/openvoiceos-bot))
+
 ## [0.0.2a1](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/tree/0.0.2a1) (2026-10-24)
 
 [Full Changelog](https://github.com/OpenVoiceOS/ovos-ww-plugin-microwakeword/compare/0.0.1a4...0.0.2a1)
